@@ -1,0 +1,32 @@
+# Youtube Recommendation Engine
+
+## The project
+The purpose of this project is to enable user to find valuable YouTube videos of their interest independent of YouTube's recommendation system.
+
+## Setup
+
+### YouTube-API-Key
+You will need to acquire a YouTube v3 API key, which you can do so easily [here](https://console.developers.google.com/cloud-resource-manager). A helpful video outlining the process can be found [here](https://www.youtube.com/watch?v=-QMg39gK624). After obtaining the API key, enter it as a string into the **config.yaml**.
+
+### Packages
+All requirements are contained within **requirements.txt**.
+
+To install them, execute the following from the root directory:
+```
+pip install -r requirements.txt
+```
+
+## Execution
+After configuring config.yaml and installing requirements, the function can be executed from the command line using:
+
+```
+python3 main.py 'search term 1' 'search term 2'
+```
+
+The default search period is 7 days, but this can be modified with the '--search-period' argument.
+
+For example:
+
+```
+python3 main.py 'machine learning' 'medical school' --search-period 10
+```
