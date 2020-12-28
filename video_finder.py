@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 11 16:09:52 2020
-
-"""
-
 
 # Load dependencies
 import pandas as pd
