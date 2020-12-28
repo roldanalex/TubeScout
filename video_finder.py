@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 # Load dependencies
 import pandas as pd
