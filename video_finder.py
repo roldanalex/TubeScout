@@ -78,24 +78,79 @@ def search_api(search_terms, api_key, uploaded_since):
 
 def populate_dataframe(results, youtube_api, df, views_threshold):
     """Extracts relevant information and puts into dataframe"""
-    # Loop over search results and add key information to dataframe
-    i = 1
+    # Extract IDs to query in batch
+    video_ids = [item['id']['videoId'] for item in results['items']]
+    
+    if not video_ids:
+        return df
+
+    # Batch 1: Get Video Statistics and Details
+    video_response = youtube_api.videos().list(
+        id=','.join(video_ids),
+        part='snippet,statistics'
+    ).execute()
+    
+    # Create a map for video details
+    videos_map = {v['id']: v for v in video_response['items']}
+
+    # Batch 2: Get Channel Statistics
+    channel_ids = list({v['snippet']['channelId'] for v in video_response['items']})
+    channel_response = youtube_api.channels().list(
+        id=','.join(channel_ids),
+        part='snippet,statistics'
+    ).execute()
+
+    # Create a map for channel details
+    channels_map = {c['id']: c for c in channel_response['items']}
+
+    data_list = []
+
     for item in results['items']:
-        viewcount = find_viewcount(item, youtube_api)
+        video_id = item['id']['videoId']
+        video_data = videos_map.get(video_id)
+        
+        if not video_data:
+            continue
+
+        viewcount = int(video_data['statistics'].get('viewCount', 0))
+        
         if viewcount > views_threshold:
-            title = find_title(item)
-            video_url = find_video_url(item)
-            channel_url = find_channel_url(item)
-            channel_id = find_channel_id(item)
-            channel_name = find_channel_title(channel_id, youtube_api)
-            num_subs = find_num_subscribers(channel_id, youtube_api)
+            title = video_data['snippet']['title']
+            video_url = f"https://www.youtube.com/watch?v={video_id}"
+            
+            channel_id = video_data['snippet']['channelId']
+            channel_data = channels_map.get(channel_id)
+            channel_url = f"https://www.youtube.com/channel/{channel_id}"
+            
+            if channel_data:
+                channel_name = channel_data['snippet']['title']
+                if channel_data['statistics'].get('hiddenSubscriberCount'):
+                    num_subs = 1000000
+                else:
+                    num_subs = int(channel_data['statistics']['subscriberCount'])
+            else:
+                channel_name = "Unknown"
+                num_subs = 0
+
             ratio = view_to_sub_ratio(viewcount, num_subs)
-            days_since_published = how_old(item)
+            days_since_published = how_old(video_data)
             score = custom_score(viewcount, ratio, days_since_published)
-            df.loc[i] = [title, video_url, score, viewcount, channel_name,\
-                                    num_subs, ratio, channel_url]
-        i += 1
-    return df
+            
+            data_list.append({
+                'Title': title, 
+                'Video URL': video_url, 
+                'Custom_Score': score,
+                'Views': viewcount, 
+                'Channel Name': channel_name,
+                'Num_subscribers': num_subs, 
+                'View-Subscriber Ratio': ratio, 
+                'Channel URL': channel_url
+            })
+
+    if data_list:
+        return pd.DataFrame(data_list)
+    else:
+        return df
 
 
 def print_top_videos(df, num_to_print):
@@ -121,47 +176,6 @@ with {} subscribers and can be viewed here: {}\n"\
 ## ====== SERIES OF FUNCTIONS TO PARSE KEY INFORMATION ABOUT VIDEOS ====== ##
 ## ======================================================================= ##
 
-def find_title(item):
-    title = item['snippet']['title']
-    return title
-
-def find_video_url(item):
-    video_id = item['id']['videoId']
-    video_url = "https://www.youtube.com/watch?v=" + video_id
-    return video_url
-
-def find_viewcount(item, youtube):
-    video_id = item['id']['videoId']
-    video_statistics = youtube.videos().list(id=video_id,
-                                        part='statistics').execute()
-    viewcount = int(video_statistics['items'][0]['statistics']['viewCount'])
-    return viewcount
-
-def find_channel_id(item):
-    channel_id = item['snippet']['channelId']
-    return channel_id
-
-def find_channel_url(item):
-    channel_id = item['snippet']['channelId']
-    channel_url = "https://www.youtube.com/channel/" + channel_id
-    return channel_url
-
-def find_channel_title(channel_id, youtube):
-    channel_search = youtube.channels().list(id=channel_id,
-                                            part='brandingSettings').execute()
-    channel_name = channel_search['items'][0]\
-                                    ['brandingSettings']['channel']['title']
-    return channel_name
-
-def find_num_subscribers(channel_id, youtube):
-    subs_search = youtube.channels().list(id=channel_id,
-                                            part='statistics').execute()
-    if subs_search['items'][0]['statistics']['hiddenSubscriberCount']:
-        num_subscribers = 1000000
-    else:
-        num_subscribers = int(subs_search['items'][0]\
-                                    ['statistics']['subscriberCount'])
-    return num_subscribers
 
 def view_to_sub_ratio(viewcount, num_subscribers):
     if num_subscribers == 0:

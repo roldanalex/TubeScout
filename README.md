@@ -1,32 +1,57 @@
-# Youtube Recommendation Engine
+# TubeScout
 
-## The project
-The purpose of this project is to enable user to find valuable YouTube videos of their interest independent of YouTube's recommendation system.
+## About
+**TubeScout** is a recommendation engine designed to help you escape the YouTube echo chamber.
 
-## Setup
+The standard YouTube algorithm often prioritizes watch time, click-through rates, and established channels, creating a "rich get richer" feedback loop. This makes it difficult to find high-quality content from smaller creators.
 
-### YouTube-API-Key
-You will need to acquire a YouTube v3 API key, which you can do so easily [here](https://console.developers.google.com/cloud-resource-manager). A helpful video outlining the process can be found [here](https://www.youtube.com/watch?v=-QMg39gK624). After obtaining the API key, enter it as a string into the **config.yaml**.
+**Why TubeScout is different:**
+Instead of relying on opaque personalization, TubeScout identifies **"hidden gems"** by calculating a **View-to-Subscriber Ratio**. If a video has a high number of views relative to the channel's subscriber count, it indicates that the content is valuable enough to travel outside the channel's existing audience base organically.
 
-### Packages
-All requirements are contained within **requirements.txt**.
+This tool puts you back in control of your feed, allowing you to find high-signal content based on your specific interests, not what an algorithm thinks you want to watch.
 
-To install them, execute the following from the root directory:
+## Features
+- **Algorithm-Free Discovery**: Search based on keywords and recency, not watch history.
+- **Custom Scoring**: Ranks videos using a weighted score of Views, Subscriber Ratio, and Recency.
+- **Web Interface**: A user-friendly Streamlit web app with mobile support.
+- **Command Line Interface**: For quick, scriptable searches.
+
+## Installation & Local Build
+
+If you want to run this application locally on your machine:
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/yourusername/TubeScout.git
+cd TubeScout
 ```
+
+### 2. Install Dependencies
+Ensure you have Python 3.9+ installed. Then run:
+```bash
 pip install -r requirements.txt
 ```
 
-## Execution
-After configuring config.yaml and installing requirements, the function can be executed from the command line using:
+### YouTube-API-Key
+You will need to acquire a YouTube v3 API key, which you can do so easily [here](https://console.developers.google.com/cloud-resource-manager). A helpful video outlining the process can be found [here](https://www.youtube.com/watch?v=-QMg39gK624).
 
+Rename `config_template.yaml` to `config.yaml` and enter your API key there.
+
+**Note:** `config.yaml` is ignored by git to prevent accidental sharing of your credentials.
+
+## Usage
+
+### Option 1: Streamlit Web App (Recommended)
+For an interactive, visual interface:
+
+```bash
+streamlit run streamlit_app.py
 ```
-python3 yt_search_engine.py 'search term 1' 'search term 2'
-```
+This will open the app in your browser. You can enter your API key in the sidebar or let it load from `config.yaml`.
 
-The default search period is 7 days, but this can be modified with the '--search-period' argument.
+### Option 2: Command Line Interface (CLI)
+For terminal-based usage:
 
-For example:
-
-```
-python3 yt_search_engine.py 'machine learning' 'medical school' --search-period 10
+```bash
+python3 yt_search_engine.py 'search term 1' 'search term 2' --search-period 10
 ```
